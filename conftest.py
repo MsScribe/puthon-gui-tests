@@ -4,9 +4,12 @@ from comtypes.client import CreateObject
 import os
 
 
+app_path = "C:\\ToolsNatasha\\FreeAddressBookPortable\\AddressBook.exe"
+
+
 @pytest.fixture(scope="session")
 def app(request):
-    fixture = Application("C:\\ToolsNatasha\\FreeAddressBookPortable\\AddressBook.exe")
+    fixture = Application(app_path)
     request.addfinalizer(fixture.destroy)
     return fixture
 
