@@ -2,15 +2,32 @@ import pytest
 from fixture.application import Application
 from comtypes.client import CreateObject
 import os
+import json
+import os.path
 
 
-app_path = "C:\\ToolsNatasha\\FreeAddressBookPortable\\AddressBook.exe"
+fixture = None
+target = None
+
+
+def load_config(file):
+    global target
+    if target is None:
+        config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), file)
+        with open(config_file) as f:
+            target = json.load(f)
+    return target
 
 
 @pytest.fixture(scope="session")
 def app(request):
-    fixture = Application(app_path)
-    request.addfinalizer(fixture.destroy)
+    global fixture
+    app_path_config = load_config(request.config.getoption("--target"))["gui"]
+    if fixture is None or not fixture.is_valid():
+        fixture = Application(target=app_path_config["baseURL"])
+    def fin():
+        fixture.destroy()
+    request.addfinalizer(fin)
     return fixture
 
 
@@ -26,3 +43,7 @@ def pytest_generate_tests(metafunc):
                 testdata.append(data)
             xl.Quit()
             metafunc.parametrize(fixture, testdata, ids=[str(x) for x in testdata])
+
+
+def pytest_addoption(parser):
+    parser.addoption("--target", action="store", default="target.json")
